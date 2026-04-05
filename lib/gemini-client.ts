@@ -66,8 +66,7 @@ export async function analyzeCropImage(
 }
 
 /**
- * Gets a chat response from Gemini
- * Would require Google Generative AI client initialization
+ * Gets a chat response from the backend API route connected to OpenRouter
  */
 export async function getChatResponse(
   message: string,
@@ -76,80 +75,29 @@ export async function getChatResponse(
   try {
     const { language = 'en' } = options;
 
-    // TODO: Implement actual Gemini Chat API call
-    // This requires:
-    // 1. Installing @google/generative-ai
-    // 2. Initializing with GOOGLE_GENERATIVE_AI_API_KEY
-    // 3. Using text generation model
-
     console.log('[v0] Getting chat response for:', message);
 
-    // Select appropriate system prompt based on language
-    let systemPrompt = AGRI_SYSTEM_PROMPT;
-    if (language === 'konkani') {
-      systemPrompt = KONKANI_SYSTEM_PROMPT;
-    } else if (language === 'marathi') {
-      systemPrompt = MARATHI_SYSTEM_PROMPT;
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message,
+        language,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('[v0] API error:', errorData);
+      throw new Error(errorData.error || 'Failed to get response');
     }
 
-    // Mock responses based on query content
-    const lowerMessage = message.toLowerCase();
-
-    if (
-      lowerMessage.includes('disease') ||
-      lowerMessage.includes('pest') ||
-      lowerMessage.includes('blight')
-    ) {
-      return language === 'en'
-        ? 'Common cashew pests include tea mosquito bug and leaf-webber moth. For diseases, watch for anthracnose and powdery mildew. Use neem oil spray for organic control.'
-        : 'पिकावर हमला करणाऱ्या कीटकांचा नियंत्रण करा.';
-    }
-
-    if (
-      lowerMessage.includes('water') ||
-      lowerMessage.includes('irrigation') ||
-      lowerMessage.includes('soil')
-    ) {
-      return language === 'en'
-        ? 'Cashew requires 500-750mm annual rainfall. During dry season, provide supplementary irrigation every 15 days. Ensure soil moisture is 60-70% of field capacity for optimal growth.'
-        : 'पाणी व्यवस्थापनाचे उचित ज्ञान आवश्यक आहे.';
-    }
-
-    if (
-      lowerMessage.includes('harvest') ||
-      lowerMessage.includes('yield') ||
-      lowerMessage.includes('production')
-    ) {
-      return language === 'en'
-        ? 'Cashew harvesting starts in February-March. A mature tree yields 8-12 kg nuts annually. Proper drying and curing improves kernel quality significantly.'
-        : 'हार्वेस्टिंग योग्य वेळी करा.';
-    }
-
-    if (
-      lowerMessage.includes('price') ||
-      lowerMessage.includes('market') ||
-      lowerMessage.includes('mandi')
-    ) {
-      return language === 'en'
-        ? 'Current cashew prices around ₹115/kg in Mandi markets. Prices fluctuate seasonally. Consider storing quality nuts for better returns during peak season.'
-        : 'बाजार दर बदलतात.';
-    }
-
-    if (
-      lowerMessage.includes('fertilizer') ||
-      lowerMessage.includes('manure') ||
-      lowerMessage.includes('nutrient')
-    ) {
-      return language === 'en'
-        ? 'Apply balanced fertilizer (NPK 10:26:26) during June-July. Apply 2-3 times at 15-day intervals. Ensure soil moisture is adequate before application for better nutrient absorption.'
-        : 'खत व्यवस्थापन महत्वाचे आहे.';
-    }
-
-    return language === 'en'
-      ? 'I can help with crop diseases, irrigation, fertilization, market prices, and harvesting. What would you like to know more about?'
-      : 'कृषी संबंधी अधिक माहितीसाठी मला विचारा.';
+    const data = await response.json();
+    return data.response || 'Unable to generate response';
   } catch (error) {
-    console.error('Error getting chat response:', error);
+    console.error('[v0] Error getting chat response:', error);
     throw new Error('Failed to get chat response');
   }
 }

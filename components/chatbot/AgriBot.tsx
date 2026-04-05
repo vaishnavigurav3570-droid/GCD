@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { getChatResponse } from '@/lib/gemini-client';
 
 interface Message {
   id: string;
@@ -77,13 +78,13 @@ export function AgriBot({
     setIsLoading(true);
 
     try {
-      // Get bot response
+      // Get bot response from real API
       let botResponse = '';
       if (onSendMessage) {
         botResponse = await onSendMessage(text);
       } else {
-        // Mock response
-        botResponse = getMockResponse(text);
+        // Use real API via getChatResponse
+        botResponse = await getChatResponse(text, { language: 'en' });
       }
 
       const botMessage: Message = {
@@ -98,6 +99,20 @@ export function AgriBot({
       };
 
       setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error('[v0] Error in handleSendMessage:', error);
+      // Add error message to chat
+      const errorMessage: Message = {
+        id: `msg-${Date.now() + 1}`,
+        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        sender: 'bot',
+        timestamp: new Date().toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
