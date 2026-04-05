@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from '@/components/header/Header';
 import { Footer } from '@/components/footer/Footer';
 import { WeatherCard } from '@/components/cards/WeatherCard';
@@ -21,6 +21,12 @@ import {
 export default function Home() {
   const [language, setLanguage] = useState<'en' | 'konkani' | 'marathi'>('en');
   const [selectedCrop, setSelectedCrop] = useState('cashew');
+
+  useEffect(() => {
+    console.log('[v0] AgriVision Dashboard initialized');
+    console.log('[v0] API Endpoint: /api/chat');
+    console.log('[v0] Using OpenRouter with Google Gemini 1.5 Pro');
+  }, []);
 
   const handleSignOut = () => {
     console.log('Sign out clicked');

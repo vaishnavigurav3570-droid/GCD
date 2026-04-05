@@ -75,7 +75,10 @@ export async function getChatResponse(
   try {
     const { language = 'en' } = options;
 
-    console.log('[v0] Getting chat response for:', message);
+    console.log('[v0] Getting chat response for:', message, 'language:', language);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -86,18 +89,35 @@ export async function getChatResponse(
         message,
         language,
       }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeout);
+
+    console.log('[v0] API response status:', response.status);
+
     if (!response.ok) {
-      const errorData = await response.json();
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { error: `HTTP ${response.status}` };
+      }
       console.error('[v0] API error:', errorData);
       throw new Error(errorData.error || 'Failed to get response');
     }
 
     const data = await response.json();
+    console.log('[v0] Response received:', data.response?.substring(0, 50) + '...');
     return data.response || 'Unable to generate response';
   } catch (error) {
     console.error('[v0] Error getting chat response:', error);
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Request timeout - please try again');
+      }
+      throw error;
+    }
     throw new Error('Failed to get chat response');
   }
 }

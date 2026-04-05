@@ -80,16 +80,21 @@ export function AgriBot({
     try {
       // Get bot response from real API
       let botResponse = '';
+      
       if (onSendMessage) {
+        console.log('[v0] Using custom onSendMessage callback');
         botResponse = await onSendMessage(text);
       } else {
         // Use real API via getChatResponse
+        console.log('[v0] Calling getChatResponse for message:', text);
         botResponse = await getChatResponse(text, { language: 'en' });
       }
 
+      console.log('[v0] Received response:', botResponse);
+
       const botMessage: Message = {
         id: `msg-${Date.now() + 1}`,
-        content: botResponse,
+        content: botResponse || 'I could not generate a response. Please try again.',
         sender: 'bot',
         timestamp: new Date().toLocaleTimeString('en-US', { 
           hour: '2-digit', 
@@ -101,10 +106,12 @@ export function AgriBot({
       setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error('[v0] Error in handleSendMessage:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       // Add error message to chat
       const errorMessage: Message = {
         id: `msg-${Date.now() + 1}`,
-        content: 'Sorry, I encountered an error processing your request. Please try again.',
+        content: `Sorry, I encountered an error: ${errorMsg}. Please check that your API key is configured and try again.`,
         sender: 'bot',
         timestamp: new Date().toLocaleTimeString('en-US', { 
           hour: '2-digit', 
